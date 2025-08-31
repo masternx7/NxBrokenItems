@@ -2,6 +2,7 @@ dev\fluffyworld\nxbrokenitems\gui\BrokenItemsGUI.class
 dev\fluffyworld\nxbrokenitems\NxBrokenItems.class
 dev\fluffyworld\nxbrokenitems\utils\MessageUtils.class
 dev\fluffyworld\nxbrokenitems\gui\DeleteItemsGUI.class
-dev\fluffyworld\nxbrokenitems\listeners\ItemBreakListener.class
-dev\fluffyworld\nxbrokenitems\listeners\ItemBreakListener$BrokenItemInfo.class
+dev\fluffyworld\nxbrokenitems\config\ConfigManager.class
+dev\fluffyworld\nxbrokenitems\model\BrokenItem.class
+dev\fluffyworld\nxbrokenitems\database\DatabaseManager.class
 dev\fluffyworld\nxbrokenitems\commands\NxBrokenItemsCommand.class

@@ -1,7 +1,10 @@
 package dev.fluffyworld.nxbrokenitems.listeners;
 
 import dev.fluffyworld.nxbrokenitems.NxBrokenItems;
+import dev.fluffyworld.nxbrokenitems.model.BrokenItem;
 import dev.fluffyworld.nxbrokenitems.utils.MessageUtils;
+import dev.fluffyworld.nxbrokenitems.gui.BrokenItemsGUI;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -35,10 +38,14 @@ public class ItemBreakListener implements Listener {
         FileConfiguration config = plugin.getConfig();
         List<String> whitelist = config.getStringList("whitelist");
 
+        // Check if item type is in whitelist
         if (!whitelist.contains(brokenItemType.name())) {
             return;
         }
 
+        // Check for Advanced Enchantments
+
+        // Additional blacklist checks
         List<String> blacklistLores = config.getStringList("blacklist.lore");
         ItemMeta meta = brokenItem.getItemMeta();
         if (meta != null && meta.hasLore()) {
@@ -57,7 +64,8 @@ public class ItemBreakListener implements Listener {
         long currentTime = System.currentTimeMillis();
         if (lastBrokenItems.containsKey(playerUUID)) {
             BrokenItemInfo lastBrokenItemInfo = lastBrokenItems.get(playerUUID);
-            if (lastBrokenItemInfo.isSameItem(brokenItem) && (currentTime - lastBrokenItemInfo.getTimestamp() <= 5000)) {
+            if (lastBrokenItemInfo.isSameItem(brokenItem)
+                    && (currentTime - lastBrokenItemInfo.getTimestamp() <= 5000)) {
                 return;
             }
         }
@@ -65,7 +73,19 @@ public class ItemBreakListener implements Listener {
         boolean repairOnRecovery = config.getBoolean("repair-on-recovery");
 
         if (repairOnRecovery) {
-            brokenItem.setDurability((short) 0);
+            if (meta != null && meta instanceof org.bukkit.inventory.meta.Damageable) {
+                ((org.bukkit.inventory.meta.Damageable) meta).setDamage(0);
+                brokenItem.setItemMeta(meta);
+            }
+        }
+
+        // Save location information
+        Location loc = player.getLocation();
+        BrokenItem brokenItemData = new BrokenItem(brokenItem.clone(), loc);
+
+        // Add to database if using MySQL
+        if (plugin.getConfig().getBoolean("server.multi-server", false)) {
+            plugin.getDatabaseManager().saveBrokenItem(playerUUID, brokenItemData);
         }
 
         lastBrokenItems.put(playerUUID, new BrokenItemInfo(brokenItem, currentTime));
@@ -101,6 +121,11 @@ public class ItemBreakListener implements Listener {
         String message = config.getString("messages.item-broken");
         if (message != null && !message.isEmpty()) {
             player.sendMessage(MessageUtils.colorize(message));
+        }
+
+        // Open GUI if auto-open is enabled
+        if (config.getBoolean("settings.auto-open-gui", false)) {
+            new BrokenItemsGUI(plugin, player).open();
         }
     }
 

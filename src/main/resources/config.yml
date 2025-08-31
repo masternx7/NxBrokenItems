@@ -6,64 +6,32 @@
 #                                                                       #
 #########################################################################
 
-# size #18, 27, 36, 45, 54 only
-menu:
-  restore:
-    title: "&cBroken Items List"
-    size: 54
-    navigation-buttons:
-      next-page:
-        material: ARROW
-        custom-model-data: 0
-        display-name: "&aNext Page"
-      previous-page:
-        material: ARROW
-        custom-model-data: 0
-        display-name: "&aPrevious Page"
-    lore:
-      format: "&eRestoration Cost: &6{cost}"
-  delete:
-    title: "&cDelete Items"
-    size: 54
-    navigation-buttons:
-      next-page:
-        material: ARROW
-        custom-model-data: 0
-        display-name: "&aNext Page"
-      previous-page:
-        material: ARROW
-        custom-model-data: 0
-        display-name: "&aPrevious Page"
-  confirm:
-    title: "&cConfirm Deletion"
-    size: 27
-    buttons:
-      confirm:
-        material: "LIME_WOOL"
-        custom-model-data: 0
-        display-name: "&aConfirm"
-      cancel:
-        material: "RED_WOOL"
-        custom-model-data: 0
-        display-name: "&cCancel"
+# Server Settings (for multi-server)
+server:
+  name: "server1"
+  multi-server: false
+
+# Database Settings (when using multi-server)
+database:
+  type: MYSQL
+  mysql:
+    host: localhost
+    port: 3306
+    database: nxbrokenitems
+    username: root
+    password: ''
+    table-prefix: 'nxbi_'
+    options:
+      useSSL: false
+      maximumPoolSize: 10
+      minimumIdle: 5
+      connectionTimeout: 30000
+  cleanup-after-days: 30
 
 ## Settings ##
 
 # Repair items and save them to the dataUser. // บันทึกไอเทมและซ่อมไอเทมถ้าหากเป็น true
 repair-on-recovery: false
-# The amount of money required to recover the item. // จำนวนเงินที่ต้องใช้ในการกู้ไอเทม
-costs:
-  - 1000
-  - 2000
-  - 6000
-  - 12000
-  - 24000
-  - 36000
-  - 38000
-  - 40000
-  - 45000
-  - 50000
-default-cost-without-unbreaking: 30000
 # Whitelist devices that are eligible for broken item recovery. // ไวท์ลิสต์อุปกรณ์ที่มีสิทธิ์ได้รับการกู้คืนรายการที่แตก
 whitelist:
   - SHIELD
@@ -96,14 +64,63 @@ blacklist:
   lore:
     - "Restore"
 
-# {cost} Shows the amount of money required to recover the item. // แสดงจำนวนเงินที่ต้องใช้เป็นค่ากู้ไอเทม
-messages:
-  usage: "&6Commands:\n&e/nb restore &f- Open Recovery Gui\n&e/nb delete &f- Open Delete Item Gui\n&e/nb reload &f- Reload config &c(Admin)"
-  reload-success: "&aConfiguration reloaded successfully."
-  no-permission: "&cYou do not have permission to use this command."
-  no-broken-items: "&cYou have no broken items to restore."
-  not-enough-money: "&cYou need {cost} to restore your items."
-  restore-success: "&aYour items have been restored."
-  item-broken: "&cYour item has broken! Use &e/nb restore &cto recover it."
-  delete-success: "&aItem deleted successfully."
-  inventory-full: "&cYour inventory is full. Please make some space before restoring items."
+# Economy Settings
+economy:
+  enabled: true
+  # The amount of money required to recover items
+  costs:
+    - 1000  # First restoration
+    - 2000  # Second restoration
+    - 6000  # Third restoration
+    - 12000
+    - 24000
+    - 36000
+    - 38000
+    - 40000
+    - 45000
+    - 50000
+  # Default cost if item has no Unbreaking enchantment
+  default-cost: 30000
+  # Cost multiplier for items with high value enchants
+  special-enchant-multiplier: 1.5
+
+# Item Settings
+items:
+  # Repair items when restoring them
+  repair-on-recovery: false
+  # Maximum items per player
+  max-per-player: 54
+
+# Whitelist of items that can be saved when broken
+whitelist:
+  - SHIELD
+  - TRIDENT
+  - FISHING_ROD
+  - BOW
+  - CROSSBOW
+  - ELYTRA
+  - NETHERITE_SWORD
+  - NETHERITE_SHOVEL
+  - NETHERITE_PICKAXE
+  - NETHERITE_AXE
+  - NETHERITE_HOE
+  - NETHERITE_HELMET
+  - NETHERITE_CHESTPLATE
+  - NETHERITE_LEGGINGS
+  - NETHERITE_BOOTS
+  - DIAMOND_SWORD
+  - DIAMOND_SHOVEL
+  - DIAMOND_PICKAXE
+  - DIAMOND_AXE
+  - DIAMOND_HOE
+  - DIAMOND_HELMET
+  - DIAMOND_CHESTPLATE
+  - DIAMOND_LEGGINGS
+  - DIAMOND_BOOTS
+
+# Additional blacklist criteria
+blacklist:
+  # Lores that prevent item from being saved
+  lore:
+    - "Restore"
+    - "Cannot be recovered"

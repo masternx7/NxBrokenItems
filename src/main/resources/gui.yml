@@ -1,0 +1,84 @@
+# GUI Settings for NxBrokenItems
+
+broken-items:
+  title: "&8Broken Items List"
+  size: 54
+  items:
+    background:
+      material: BLACK_STAINED_GLASS_PANE
+      name: " "
+      custom-model-data: 1
+      slots: [0,1,2,3,4,5,6,7,8,45,46,47,48,49,50,51,52,53]
+    
+    broken-item:
+      slots: [9-44]
+      lore:
+        - "&7Item: &f%item_name%"
+        - "&7Broken at: &f%break_time%"
+        - "&7Location: &f%break_location%"
+        - "&7Server: &f%server_name%"
+        - "&7Enchantments:"
+        - "%enchants%"
+        - ""
+        - "&eLeft-Click &7to restore!"
+    
+    previous-page:
+      material: ARROW
+      name: "&ePrevious Page"
+      custom-model-data: 2
+      slot: 45
+      
+    next-page:
+      material: ARROW
+      name: "&eNext Page"
+      custom-model-data: 3
+      slot: 53
+      
+    close:
+      material: BARRIER
+      name: "&cClose"
+      custom-model-data: 4
+      slot: 49
+
+confirm-gui:
+  title: "&8Confirm Action"
+  size: 27
+  items:
+    background:
+      material: GRAY_STAINED_GLASS_PANE
+      name: " "
+      custom-model-data: 5
+      slots: [0-26]
+      
+    confirm:
+      material: LIME_CONCRETE
+      name: "&aConfirm"
+      custom-model-data: 6
+      slot: 11
+      lore:
+        - "&7Click to confirm this action"
+      
+    cancel:
+      material: RED_CONCRETE
+      name: "&cCancel"
+      custom-model-data: 7
+      slot: 15
+      lore:
+        - "&7Click to cancel this action"
+      
+    info:
+      material: PAPER
+      name: "&e%action_title%"
+      custom-model-data: 8
+      slot: 13
+      lore:
+        - "&7%action_description%"
+        - ""
+        - "&7This action cannot be undone!"
+    delete:
+      material: PAPER
+      name: "&eDelete this items"
+      custom-model-data: 8
+      slot: 12
+      lore:
+        - "&7Click to delete this item"

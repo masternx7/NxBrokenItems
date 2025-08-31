@@ -1,0 +1,28 @@
+# Messages Configuration for NxBrokenItems
+
+prefix: "&8[&bNxBrokenItems&8] &r"
+
+messages:
+  no-permission: "&cYou don't have permission to use this command!"
+  item-broken: "&eYour item has been saved to the broken items list!"
+  item-restored: "&aSuccessfully restored your broken item!"
+  no-broken-items: "&cYou don't have any broken items!"
+  invalid-item: "&cInvalid item selection!"
+  inventory-full: "&cYour inventory is full! Clear some space first!"
+  item-deleted: "&aItem has been deleted from the list!"
+  loading-data: "&eLoading your broken items data..."
+  saving-data: "&eSaving broken items data..."
+  error-loading: "&cError loading data: %error%"
+  error-saving: "&cError saving data: %error%"
+
+commands:
+  help:
+    - "&8&m----------------------------------------"
+    - "&b/nxbroken &7- Open broken items menu"
+    - "&b/nxbroken reload &7- Reload configuration"
+    - "&b/nxbroken clear <player> &7- Clear player's broken items"
+    - "&8&m----------------------------------------"
+  reload-success: "&aConfiguration reloaded successfully!"
+  reload-error: "&cError reloading configuration: %error%"
+  clear-success: "&aCleared broken items for %player%!"
+  player-not-found: "&cPlayer not found!"
