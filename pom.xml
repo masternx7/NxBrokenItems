@@ -6,13 +6,13 @@
 
   <groupId>dev.fluffyworld</groupId>
   <artifactId>NxBrokenItems</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <packaging>jar</packaging>
 
   <name>NxBrokenItems</name>
 
   <properties>
-    <java.version>1.8</java.version>
+    <java.version>21</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -21,10 +21,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.11.0</version>
         <configuration>
-          <source>9</source>
-          <target>9</target>
+          <source>21</source>
+          <target>21</target>
+          <release>21</release>
         </configuration>
       </plugin>
       <plugin>
@@ -72,7 +73,7 @@
       <dependency>
           <groupId>org.spigotmc</groupId>
           <artifactId>spigot-api</artifactId>
-          <version>1.20.1-R0.1-SNAPSHOT</version>
+          <version>1.21.1-R0.1-SNAPSHOT</version>
           <scope>provided</scope>
       </dependency>
       <dependency>

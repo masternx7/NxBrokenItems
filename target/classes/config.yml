@@ -63,7 +63,9 @@ costs:
   - 40000
   - 45000
   - 50000
-default-cost-without-unbreaking: 30000
+default-cost-without-unbreaking: 500
+# Cost for items with AdvancedEnchantments
+advanced-enchantment-cost: 30000
 # Whitelist devices that are eligible for broken item recovery. // ไวท์ลิสต์อุปกรณ์ที่มีสิทธิ์ได้รับการกู้คืนรายการที่แตก
 whitelist:
   - SHIELD
@@ -91,10 +93,18 @@ whitelist:
   - DIAMOND_LEGGINGS
   - DIAMOND_BOOTS
 
-# Blacklist items with lore as shown in the list below. // Blacklist ไอเทมที่มี lore ตาม list ด้านล่าง เพื่อไม่ให้บันทึกเข้าสู่รายการไอเทมที่แตก
+# Blacklist items with custom data as shown in the list below. // Blacklist ไอเทมที่มี custom data ตาม list ด้านล่าง
+# Items with these custom data keys will be saved but cannot be restored
 blacklist:
-  lore:
-    - "Restore"
+  custom-data:
+    - "advancedenchantments:ae_enchantment-trench"
+    - "advancedenchantments:ae_enchantment-explosive"
+
+# Custom data multipliers for restoration cost
+# Items with these custom data will have their cost multiplied
+cost-multipliers:
+  "advancedenchantments:ae_enchantment-trench": 2.0
+  "advancedenchantments:ae_enchantment-explosive": 1.5
 
 # {cost} Shows the amount of money required to recover the item. // แสดงจำนวนเงินที่ต้องใช้เป็นค่ากู้ไอเทม
 messages:
@@ -107,3 +117,5 @@ messages:
   item-broken: "&cYour item has broken! Use &e/nb restore &cto recover it."
   delete-success: "&aItem deleted successfully."
   inventory-full: "&cYour inventory is full. Please make some space before restoring items."
+  blacklisted-item: "&cThis item contains blacklisted enchantments and cannot be restored automatically."
+  contact-admin: "&eIf you need to restore this item, please contact an admin or open a ticket."

@@ -4,6 +4,7 @@ import dev.fluffyworld.nxbrokenitems.NxBrokenItems;
 import dev.fluffyworld.nxbrokenitems.utils.MessageUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -14,103 +15,125 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.plugin.PluginManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public class DeleteItemsGUI implements Listener {
+public final class DeleteItemsGUI implements Listener {
 
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter DATE_ONLY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    
     private final NxBrokenItems plugin;
-    private final Map<UUID, Integer> playerPageMap = new HashMap<>();
-    private final Map<UUID, ItemStack> confirmDeleteMap = new HashMap<>();
+    private final Map<UUID, Integer> playerPageMap = new ConcurrentHashMap<>();
+    private final Map<UUID, ItemStack> confirmDeleteMap = new ConcurrentHashMap<>();
 
     public DeleteItemsGUI(NxBrokenItems plugin) {
-        this.plugin = plugin;
-        PluginManager pluginManager = Bukkit.getPluginManager();
-        pluginManager.registerEvents(this, plugin);
-    }
-
-    public void openInventory(Player player, int page) {
-        UUID playerUUID = player.getUniqueId();
-        FileConfiguration dataConfig = plugin.getDataConfig(playerUUID);
-
-        if (dataConfig == null || !dataConfig.contains("restoreItem")) {
-            player.sendMessage(MessageUtils.colorize(plugin.getConfig().getString("messages.no-broken-items")));
-            return;
-        }
-
-        String title = MessageUtils.colorize(plugin.getConfig().getString("menu.delete.title", "&cDelete Broken Items"));
-        int size = plugin.getConfig().getInt("menu.delete.size", 54);
-        int itemsPerPage = size - 9; // Reserving last row for navigation
-
-        Inventory inventory = Bukkit.createInventory(null, size, title);
-
-        List<ItemStack> items = new ArrayList<>();
-        for (String key : dataConfig.getConfigurationSection("restoreItem").getKeys(false)) {
-            ItemStack item = dataConfig.getItemStack("restoreItem." + key);
-            if (item != null) {
-                items.add(item);
-            }
-        }
-
-        int startIndex = page * itemsPerPage;
-        int endIndex = Math.min(startIndex + itemsPerPage, items.size());
-
-        for (int i = startIndex; i < endIndex; i++) {
-            inventory.addItem(items.get(i));
-        }
-
-        if (page > 0) {
-            ItemStack prevPage = createNavigationItem("menu.delete.navigation-buttons.previous-page");
-            inventory.setItem(size - 9, prevPage);
-        }
-
-        if (endIndex < items.size()) {
-            ItemStack nextPage = createNavigationItem("menu.delete.navigation-buttons.next-page");
-            inventory.setItem(size - 1, nextPage);
-        }
-
-        player.openInventory(inventory);
-        playerPageMap.put(playerUUID, page);
+        this.plugin = Objects.requireNonNull(plugin, "Plugin cannot be null");
+        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     public void openInventory(Player player) {
         openInventory(player, 0);
     }
 
-    private ItemStack createNavigationItem(String configPath) {
-        FileConfiguration config = plugin.getConfig();
-        Material material = Material.valueOf(config.getString(configPath + ".material", "ARROW").toUpperCase());
-        int customModelData = config.getInt(configPath + ".custom-model-data", 0);
-        String displayName = MessageUtils.colorize(config.getString(configPath + ".display-name", ""));
+    public void openInventory(Player player, int page) {
+        final UUID playerUUID = player.getUniqueId();
+        final FileConfiguration dataConfig = plugin.getDataConfig(playerUUID);
 
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
+        if (dataConfig == null || !dataConfig.contains("restoreItem")) {
+            sendMessage(player, "messages.no-broken-items");
+            return;
+        }
+
+        final FileConfiguration config = plugin.getConfig();
+        final String title = MessageUtils.colorize(config.getString("menu.delete.title", "&cDelete Broken Items"));
+        final int size = config.getInt("menu.delete.size", 54);
+        final int itemsPerPage = size - 9;
+
+        final Inventory inventory = Bukkit.createInventory(null, size, title);
+        final List<ItemStack> items = loadBrokenItems(dataConfig);
+
+        final int startIndex = page * itemsPerPage;
+        final int endIndex = Math.min(startIndex + itemsPerPage, items.size());
+
+        items.subList(startIndex, endIndex).forEach(inventory::addItem);
+
+        // Add navigation buttons
+        if (page > 0) {
+            inventory.setItem(size - 9, createNavigationItem("menu.delete.navigation-buttons.previous-page"));
+        }
+
+        if (endIndex < items.size()) {
+            inventory.setItem(size - 1, createNavigationItem("menu.delete.navigation-buttons.next-page"));
+        }
+
+        player.openInventory(inventory);
+        playerPageMap.put(playerUUID, page);
+    }
+
+    private List<ItemStack> loadBrokenItems(FileConfiguration dataConfig) {
+        final ConfigurationSection restoreSection = dataConfig.getConfigurationSection("restoreItem");
+        if (restoreSection == null) {
+            return Collections.emptyList();
+        }
+
+        return restoreSection.getKeys(false).stream()
+            .map(key -> {
+                // Try new format first (.item), then fallback to old format
+                ItemStack item = dataConfig.getItemStack("restoreItem." + key + ".item");
+                if (item == null) {
+                    item = dataConfig.getItemStack("restoreItem." + key);
+                }
+                return item;
+            })
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+    }
+
+    private ItemStack createNavigationItem(String configPath) {
+        final FileConfiguration config = plugin.getConfig();
+        final Material material = Material.getMaterial(
+            config.getString(configPath + ".material", "ARROW").toUpperCase());
+        
+        if (material == null) {
+            plugin.getLogger().warning("Invalid material for navigation button: " + configPath);
+            return new ItemStack(Material.ARROW);
+        }
+
+        final ItemStack item = new ItemStack(material);
+        final ItemMeta meta = item.getItemMeta();
+        
         if (meta != null) {
-            meta.setDisplayName(displayName);
+            meta.setDisplayName(MessageUtils.colorize(
+                config.getString(configPath + ".display-name", "")));
+            
+            final int customModelData = config.getInt(configPath + ".custom-model-data", 0);
             if (customModelData != 0) {
                 meta.setCustomModelData(customModelData);
             }
+            
             item.setItemMeta(meta);
         }
+        
         return item;
     }
 
     private void openConfirmationInventory(Player player, ItemStack itemToDelete) {
-        String title = MessageUtils.colorize(plugin.getConfig().getString("menu.confirm.title", "&cConfirm Deletion"));
-        int size = plugin.getConfig().getInt("menu.confirm.size", 27);
+        final FileConfiguration config = plugin.getConfig();
+        final String title = MessageUtils.colorize(config.getString("menu.confirm.title", "&cConfirm Deletion"));
+        final int size = config.getInt("menu.confirm.size", 27);
 
-        Inventory confirmationInventory = Bukkit.createInventory(null, size, title);
+        final Inventory confirmationInventory = Bukkit.createInventory(null, size, title);
 
-        ItemStack confirmItem = createNavigationItem("menu.confirm.buttons.confirm");
-        ItemStack cancelItem = createNavigationItem("menu.confirm.buttons.cancel");
-
-        confirmationInventory.setItem(11, confirmItem);
-        confirmationInventory.setItem(15, cancelItem);
+        confirmationInventory.setItem(11, createNavigationItem("menu.confirm.buttons.confirm"));
+        confirmationInventory.setItem(15, createNavigationItem("menu.confirm.buttons.cancel"));
 
         player.openInventory(confirmationInventory);
         confirmDeleteMap.put(player.getUniqueId(), itemToDelete);
@@ -118,119 +141,171 @@ public class DeleteItemsGUI implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        String deleteTitlePrefix = MessageUtils.colorize(plugin.getConfig().getString("menu.delete.title", "&cDelete Broken Items"));
-        String confirmTitlePrefix = MessageUtils.colorize(plugin.getConfig().getString("menu.confirm.title", "&cConfirm Deletion"));
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
 
-        if (event.getView().getTitle().startsWith(deleteTitlePrefix)) {
-            event.setCancelled(true);
+        final String title = event.getView().getTitle();
+        final FileConfiguration config = plugin.getConfig();
+        final String deleteTitlePrefix = MessageUtils.colorize(
+            config.getString("menu.delete.title", "&cDelete Broken Items"));
+        final String confirmTitlePrefix = MessageUtils.colorize(
+            config.getString("menu.confirm.title", "&cConfirm Deletion"));
 
-            if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR) {
-                return;
+        if (title.startsWith(deleteTitlePrefix)) {
+            handleDeleteMenuClick(event, player);
+        } else if (title.startsWith(confirmTitlePrefix)) {
+            handleConfirmMenuClick(event, player);
+        }
+    }
+
+    private void handleDeleteMenuClick(InventoryClickEvent event, Player player) {
+        event.setCancelled(true);
+
+        final ItemStack clickedItem = event.getCurrentItem();
+        if (clickedItem == null || clickedItem.getType() == Material.AIR) {
+            return;
+        }
+
+        final ItemMeta meta = clickedItem.getItemMeta();
+        if (meta == null || meta.getDisplayName() == null) {
+            openConfirmationInventory(player, clickedItem);
+            return;
+        }
+
+        final FileConfiguration config = plugin.getConfig();
+        final String itemName = meta.getDisplayName();
+        final String nextPageName = MessageUtils.colorize(
+            config.getString("menu.delete.navigation-buttons.next-page.display-name", "&aNext Page"));
+        final String prevPageName = MessageUtils.colorize(
+            config.getString("menu.delete.navigation-buttons.previous-page.display-name", "&aPrevious Page"));
+
+        final UUID playerUUID = player.getUniqueId();
+        final int currentPage = playerPageMap.getOrDefault(playerUUID, 0);
+
+        if (itemName.equals(nextPageName)) {
+            openInventory(player, currentPage + 1);
+        } else if (itemName.equals(prevPageName)) {
+            openInventory(player, currentPage - 1);
+        } else {
+            openConfirmationInventory(player, clickedItem);
+        }
+    }
+
+    private void handleConfirmMenuClick(InventoryClickEvent event, Player player) {
+        event.setCancelled(true);
+
+        final ItemStack clickedItem = event.getCurrentItem();
+        if (clickedItem == null || clickedItem.getType() == Material.AIR) {
+            return;
+        }
+
+        final ItemMeta meta = clickedItem.getItemMeta();
+        if (meta == null || meta.getDisplayName() == null) {
+            return;
+        }
+
+        final FileConfiguration config = plugin.getConfig();
+        final String itemName = meta.getDisplayName();
+        final String confirmName = MessageUtils.colorize(
+            config.getString("menu.confirm.buttons.confirm.display-name", "&aConfirm"));
+        final String cancelName = MessageUtils.colorize(
+            config.getString("menu.confirm.buttons.cancel.display-name", "&cCancel"));
+
+        final UUID playerUUID = player.getUniqueId();
+        final ItemStack itemToDelete = confirmDeleteMap.get(playerUUID);
+
+        if (itemName.equals(confirmName)) {
+            if (itemToDelete != null) {
+                handleItemDeletion(player, itemToDelete);
             }
-
-            Player player = (Player) event.getWhoClicked();
-            UUID playerUUID = player.getUniqueId();
-            ItemStack item = event.getCurrentItem();
-
-            FileConfiguration config = plugin.getConfig();
-            String nextPageDisplayName = MessageUtils.colorize(config.getString("menu.delete.navigation-buttons.next-page.display-name", "&aNext Page"));
-            String prevPageDisplayName = MessageUtils.colorize(config.getString("menu.delete.navigation-buttons.previous-page.display-name", "&aPrevious Page"));
-
-            if (item.getItemMeta() != null && item.getItemMeta().getDisplayName() != null) {
-                String itemName = item.getItemMeta().getDisplayName();
-                int currentPage = playerPageMap.getOrDefault(playerUUID, 0);
-
-                if (itemName.equals(nextPageDisplayName)) {
-                    openInventory(player, currentPage + 1);
-                } else if (itemName.equals(prevPageDisplayName)) {
-                    openInventory(player, currentPage - 1);
-                } else {
-                    openConfirmationInventory(player, item);
-                }
-                return;
-            }
-
-            openConfirmationInventory(player, item);
-
-        } else if (event.getView().getTitle().startsWith(confirmTitlePrefix)) {
-            event.setCancelled(true);
-
-            if (event.getCurrentItem() == null || event.getCurrentItem().getType() == Material.AIR) {
-                return;
-            }
-
-            Player player = (Player) event.getWhoClicked();
-            UUID playerUUID = player.getUniqueId();
-            ItemStack item = event.getCurrentItem();
-
-            FileConfiguration config = plugin.getConfig();
-            String confirmDisplayName = MessageUtils.colorize(config.getString("menu.confirm.buttons.confirm.display-name", "&aConfirm"));
-            String cancelDisplayName = MessageUtils.colorize(config.getString("menu.confirm.buttons.cancel.display-name", "&cCancel"));
-
-            if (item.getItemMeta() != null && item.getItemMeta().getDisplayName() != null) {
-                String itemName = item.getItemMeta().getDisplayName();
-
-                if (itemName.equals(confirmDisplayName)) {
-                    handleItemDeletion(player, confirmDeleteMap.get(playerUUID));
-                    confirmDeleteMap.remove(playerUUID);
-                    openInventory(player, playerPageMap.getOrDefault(playerUUID, 0));
-                } else if (itemName.equals(cancelDisplayName)) {
-                    confirmDeleteMap.remove(playerUUID);
-                    openInventory(player, playerPageMap.getOrDefault(playerUUID, 0));
-                }
-                return;
-            }
+            confirmDeleteMap.remove(playerUUID);
+            openInventory(player, playerPageMap.getOrDefault(playerUUID, 0));
+        } else if (itemName.equals(cancelName)) {
+            confirmDeleteMap.remove(playerUUID);
+            openInventory(player, playerPageMap.getOrDefault(playerUUID, 0));
         }
     }
 
     private void handleItemDeletion(Player player, ItemStack item) {
-        UUID playerUUID = player.getUniqueId();
-        FileConfiguration dataConfig = plugin.getDataConfig(playerUUID);
+        final UUID playerUUID = player.getUniqueId();
+        final FileConfiguration dataConfig = plugin.getDataConfig(playerUUID);
 
-        for (String key : dataConfig.getConfigurationSection("restoreItem").getKeys(false)) {
-            ItemStack storedItem = dataConfig.getItemStack("restoreItem." + key);
+        if (dataConfig == null) {
+            return;
+        }
+
+        final ConfigurationSection restoreSection = dataConfig.getConfigurationSection("restoreItem");
+        if (restoreSection == null) {
+            return;
+        }
+
+        for (String key : restoreSection.getKeys(false)) {
+            // Try new format first (.item), then fallback to old format
+            ItemStack storedItem = dataConfig.getItemStack("restoreItem." + key + ".item");
+            if (storedItem == null) {
+                storedItem = dataConfig.getItemStack("restoreItem." + key);
+            }
+            
             if (storedItem != null && storedItem.isSimilar(item)) {
                 dataConfig.set("restoreItem." + key, null);
                 plugin.saveDataFile(playerUUID, dataConfig);
-                player.sendMessage(MessageUtils.colorize(plugin.getConfig().getString("messages.delete-success")));
-
+                sendMessage(player, "messages.delete-success");
                 logDeletion(player.getName(), item);
-
                 return;
             }
         }
     }
 
     private void logDeletion(String playerName, ItemStack item) {
-        File logFile = new File(plugin.getDataFolder(), "log-item-delete.yml");
-        FileConfiguration logConfig = YamlConfiguration.loadConfiguration(logFile);
+        final File logFile = new File(plugin.getDataFolder(), "log-item-delete.yml");
+        final FileConfiguration logConfig = YamlConfiguration.loadConfiguration(logFile);
 
-        String currentTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-        String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        final LocalDateTime now = LocalDateTime.now();
+        final String currentTime = now.format(DATE_FORMAT);
+        final String currentDate = now.format(DATE_ONLY_FORMAT);
 
-        String displayName = item.getItemMeta().hasDisplayName() ? item.getItemMeta().getDisplayName() : item.getType().name();
-        List<String> loreList = item.getItemMeta().hasLore() ? item.getItemMeta().getLore() : List.of();
+        final ItemMeta meta = item.getItemMeta();
+        final String displayName = meta != null && meta.hasDisplayName() 
+            ? meta.getDisplayName() 
+            : item.getType().name();
+        
+        final List<String> loreList = meta != null && meta.hasLore() 
+            ? meta.getLore() 
+            : Collections.emptyList();
+        
+        final Map<Enchantment, Integer> enchantments = meta != null 
+            ? meta.getEnchants() 
+            : Collections.emptyMap();
 
-        Map<Enchantment, Integer> enchantments = item.getItemMeta().getEnchants();
-        String enchantmentsStr = enchantments.isEmpty() ? "" : " with enchantments: " + enchantments.entrySet().stream()
+        final String enchantmentsStr = enchantments.isEmpty() 
+            ? "" 
+            : " with enchantments: " + enchantments.entrySet().stream()
                 .map(e -> e.getKey().getKey().getKey() + " " + e.getValue())
                 .collect(Collectors.joining(", "));
 
-        String lore = loreList.isEmpty() ? "" : " with lore: " + String.join(", ", loreList);
-        String logEntry = playerName + " deleted " + item.getAmount() + "x " + displayName + lore + enchantmentsStr + " at " + currentTime;
+        final String lore = loreList.isEmpty() 
+            ? "" 
+            : " with lore: " + String.join(", ", loreList);
+        
+        final String logEntry = String.format("%s deleted %dx %s%s%s at %s",
+            playerName, item.getAmount(), displayName, lore, enchantmentsStr, currentTime);
 
-        if (!logConfig.contains("logs")) {
-            logConfig.set("logs", new ArrayList<>());
-        }
-
-        List<String> dailyLogs = logConfig.getStringList(currentDate);
+        final List<String> dailyLogs = new ArrayList<>(logConfig.getStringList(currentDate));
         dailyLogs.add(logEntry);
         logConfig.set(currentDate, dailyLogs);
 
         try {
             logConfig.save(logFile);
         } catch (IOException e) {
-            e.printStackTrace();
+            plugin.getLogger().log(Level.SEVERE, "Failed to save deletion log", e);
+        }
+    }
+
+    private void sendMessage(Player player, String path) {
+        final String message = plugin.getConfig().getString(path);
+        if (message != null && !message.isEmpty()) {
+            player.sendMessage(MessageUtils.colorize(message));
         }
     }
 }
