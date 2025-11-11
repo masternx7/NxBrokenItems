@@ -13,9 +13,6 @@ permissions:
   nxbrokenitems.restore:
     description: Allows the player to restore broken items
     default: true
-  nxbrokenitems.delete:
-    description: Allows the player to delete broken items
-    default: true
   nxbrokenitems.reload:
     description: Allows the player to reload the plugin configuration
     default: op

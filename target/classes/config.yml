@@ -22,30 +22,25 @@ menu:
         display-name: "&aPrevious Page"
     lore:
       format: "&eRestoration Cost: &6{cost}"
-  delete:
-    title: "&cDelete Items"
-    size: 54
-    navigation-buttons:
-      next-page:
-        material: ARROW
-        custom-model-data: 0
-        display-name: "&aNext Page"
-      previous-page:
-        material: ARROW
-        custom-model-data: 0
-        display-name: "&aPrevious Page"
   confirm:
-    title: "&cConfirm Deletion"
+    title: "&cConfirm Action"
     size: 27
     buttons:
-      confirm:
+      restore:
+        slot: 11
         material: "LIME_WOOL"
         custom-model-data: 0
-        display-name: "&aConfirm"
-      cancel:
+        display-name: "&a&lRestore Item"
+      delete:
+        slot: 15
         material: "RED_WOOL"
         custom-model-data: 0
-        display-name: "&cCancel"
+        display-name: "&c&lDelete Item"
+      back:
+        slot: 13
+        material: "BARRIER"
+        custom-model-data: 0
+        display-name: "&e&lBack to List"
 
 ## Settings ##
 
@@ -108,7 +103,7 @@ cost-multipliers:
 
 # {cost} Shows the amount of money required to recover the item. // แสดงจำนวนเงินที่ต้องใช้เป็นค่ากู้ไอเทม
 messages:
-  usage: "&6Commands:\n&e/nb restore &f- Open Recovery Gui\n&e/nb delete &f- Open Delete Item Gui\n&e/nb reload &f- Reload config &c(Admin)"
+  usage: "&6Commands:\n&e/nb restore &f- Open Broken Items GUI\n&e/nb reload &f- Reload config &c(Admin)"
   reload-success: "&aConfiguration reloaded successfully."
   no-permission: "&cYou do not have permission to use this command."
   no-broken-items: "&cYou have no broken items to restore."

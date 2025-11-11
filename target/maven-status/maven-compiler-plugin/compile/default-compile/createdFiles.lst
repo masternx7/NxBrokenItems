@@ -1,7 +1,13 @@
+dev\fluffyworld\nxbrokenitems\listeners\ItemBreakListener.class
+dev\fluffyworld\nxbrokenitems\commands\NxBrokenItemsCommand.class
+dev\fluffyworld\nxbrokenitems\gui\components\ItemComparator.class
+dev\fluffyworld\nxbrokenitems\gui\components\ItemCostCalculator.class
+dev\fluffyworld\nxbrokenitems\listeners\components\ItemSaver.class
 dev\fluffyworld\nxbrokenitems\gui\BrokenItemsGUI.class
+dev\fluffyworld\nxbrokenitems\listeners\components\ItemValidator.class
 dev\fluffyworld\nxbrokenitems\NxBrokenItems.class
 dev\fluffyworld\nxbrokenitems\utils\MessageUtils.class
-dev\fluffyworld\nxbrokenitems\gui\DeleteItemsGUI.class
-dev\fluffyworld\nxbrokenitems\listeners\ItemBreakListener.class
-dev\fluffyworld\nxbrokenitems\listeners\ItemBreakListener$BrokenItemInfo.class
-dev\fluffyworld\nxbrokenitems\commands\NxBrokenItemsCommand.class
+dev\fluffyworld\nxbrokenitems\listeners\components\DuplicateChecker.class
+dev\fluffyworld\nxbrokenitems\gui\components\ItemLogger.class
+dev\fluffyworld\nxbrokenitems\listeners\components\BrokenItemInfo.class
+dev\fluffyworld\nxbrokenitems\gui\components\InventoryBuilder.class

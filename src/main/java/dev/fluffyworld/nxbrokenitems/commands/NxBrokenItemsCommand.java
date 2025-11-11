@@ -2,7 +2,6 @@ package dev.fluffyworld.nxbrokenitems.commands;
 
 import dev.fluffyworld.nxbrokenitems.NxBrokenItems;
 import dev.fluffyworld.nxbrokenitems.gui.BrokenItemsGUI;
-import dev.fluffyworld.nxbrokenitems.gui.DeleteItemsGUI;
 import dev.fluffyworld.nxbrokenitems.utils.MessageUtils;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
@@ -18,14 +17,12 @@ import java.util.stream.Collectors;
 
 public final class NxBrokenItemsCommand implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBCOMMANDS = Arrays.asList("restore", "delete", "reload");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("restore", "reload");
     private static final String PERMISSION_RESTORE = "nxbrokenitems.restore";
-    private static final String PERMISSION_DELETE = "nxbrokenitems.delete";
     private static final String PERMISSION_RELOAD = "nxbrokenitems.reload";
 
     private final NxBrokenItems plugin;
     private final BrokenItemsGUI brokenItemsGUI;
-    private final DeleteItemsGUI deleteItemsGUI;
     private final Economy economy;
 
     public NxBrokenItemsCommand(NxBrokenItems plugin) {
@@ -33,13 +30,11 @@ public final class NxBrokenItemsCommand implements CommandExecutor, TabCompleter
         this.economy = setupEconomy();
         
         if (economy != null) {
-            this.deleteItemsGUI = new DeleteItemsGUI(plugin);
             this.brokenItemsGUI = new BrokenItemsGUI(plugin, economy);
             plugin.getLogger().info("Economy system initialized successfully");
         } else {
             plugin.getLogger().warning("Vault not found! Economy functions will be disabled.");
             this.brokenItemsGUI = null;
-            this.deleteItemsGUI = null;
         }
     }
 
@@ -59,7 +54,6 @@ public final class NxBrokenItemsCommand implements CommandExecutor, TabCompleter
         
         return switch (subCommand) {
             case "restore" -> handleRestoreCommand(player);
-            case "delete" -> handleDeleteCommand(player);
             case "reload" -> handleReloadCommand(player);
             default -> {
                 sendMessage(player, "messages.usage");
@@ -83,24 +77,6 @@ public final class NxBrokenItemsCommand implements CommandExecutor, TabCompleter
         }
 
         brokenItemsGUI.openInventory(player);
-        return true;
-    }
-
-    /**
-     * Handle the delete subcommand
-     */
-    private boolean handleDeleteCommand(Player player) {
-        if (!player.hasPermission(PERMISSION_DELETE)) {
-            sendMessage(player, "messages.no-permission");
-            return true;
-        }
-
-        if (deleteItemsGUI == null) {
-            player.sendMessage("§cVault is not enabled, this command is disabled.");
-            return true;
-        }
-
-        deleteItemsGUI.openInventory(player);
         return true;
     }
 
@@ -150,7 +126,6 @@ public final class NxBrokenItemsCommand implements CommandExecutor, TabCompleter
     private boolean hasPermissionForSubCommand(Player player, String subCommand) {
         return switch (subCommand) {
             case "restore" -> player.hasPermission(PERMISSION_RESTORE);
-            case "delete" -> player.hasPermission(PERMISSION_DELETE);
             case "reload" -> player.hasPermission(PERMISSION_RELOAD);
             default -> false;
         };
