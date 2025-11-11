@@ -22,7 +22,7 @@ public final class NxBrokenItemsCommand implements CommandExecutor, TabCompleter
     private static final String PERMISSION_RELOAD = "nxbrokenitems.reload";
 
     private final NxBrokenItems plugin;
-    private final BrokenItemsGUI brokenItemsGUI;
+    private BrokenItemsGUI brokenItemsGUI;
     private final Economy economy;
 
     public NxBrokenItemsCommand(NxBrokenItems plugin) {
@@ -100,6 +100,11 @@ public final class NxBrokenItemsCommand implements CommandExecutor, TabCompleter
         final UUID playerUUID = player.getUniqueId();
         plugin.reloadDataFile(playerUUID);
         plugin.reloadConfig();
+        
+        if (economy != null) {
+            brokenItemsGUI = new BrokenItemsGUI(plugin, economy);
+        }
+        
         sendMessage(player, "messages.reload-success");
         plugin.getLogger().info("Configuration reloaded by " + player.getName());
     }

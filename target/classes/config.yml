@@ -9,21 +9,24 @@
 # size #18, 27, 36, 45, 54 only
 menu:
   restore:
-    title: "&cBroken Items List"
+    title: "&cBroken Items Listไกไกไก"
     size: 54
+    items-per-page-offset: 9
     navigation-buttons:
       next-page:
+        slot: -1
         material: ARROW
         custom-model-data: 0
         display-name: "&aNext Page"
       previous-page:
+        slot: -9
         material: ARROW
         custom-model-data: 0
         display-name: "&aPrevious Page"
     lore:
       format: "&eRestoration Cost: &6{cost}"
   confirm:
-    title: "&cConfirm Action"
+    title: "&cConfirm Actionกไกไก"
     size: 27
     buttons:
       restore:
@@ -43,6 +46,17 @@ menu:
         display-name: "&e&lBack to List"
 
 ## Settings ##
+
+logging:
+  date-time-format: "yyyy-MM-dd HH:mm:ss"
+  date-only-format: "yyyy-MM-dd"
+  recovery-log-file: "log-recovery.yml"
+  deletion-log-file: "log-item-delete.yml"
+  entry-format: "%s %s %dx %s%s%s at %s"
+
+placeholderapi:
+  inventory-full-placeholder: "%fluffy_isfull%"
+  inventory-full-value: "true"
 
 # Repair items and save them to the dataUser. // บันทึกไอเทมและซ่อมไอเทมถ้าหากเป็น true
 repair-on-recovery: false

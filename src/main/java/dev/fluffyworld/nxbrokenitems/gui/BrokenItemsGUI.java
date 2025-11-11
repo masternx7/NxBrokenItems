@@ -37,7 +37,7 @@ public final class BrokenItemsGUI implements Listener {
         this.plugin = Objects.requireNonNull(plugin, "Plugin cannot be null");
         this.economy = Objects.requireNonNull(economy, "Economy cannot be null");
         this.costCalculator = new ItemCostCalculator(plugin.getConfig());
-        this.itemLogger = new ItemLogger(plugin.getDataFolder(), plugin.getLogger());
+        this.itemLogger = new ItemLogger(plugin.getDataFolder(), plugin.getLogger(), plugin.getConfig());
         this.inventoryBuilder = new InventoryBuilder(plugin.getConfig(), plugin.getLogger());
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
@@ -210,16 +210,18 @@ public final class BrokenItemsGUI implements Listener {
 
         final int cost = calculateRestorationCost(item) * item.getAmount();
 
-        // Check if inventory is full
-        if (PlaceholderAPI.setPlaceholders(player, "%fluffy_isfull%").equalsIgnoreCase("true")) {
+        final FileConfiguration config = plugin.getConfig();
+        final String inventoryFullPlaceholder = config.getString("placeholderapi.inventory-full-placeholder", "%fluffy_isfull%");
+        final String inventoryFullValue = config.getString("placeholderapi.inventory-full-value", "true");
+
+        if (PlaceholderAPI.setPlaceholders(player, inventoryFullPlaceholder).equalsIgnoreCase(inventoryFullValue)) {
             sendMessage(player, "messages.inventory-full");
             return;
         }
 
-        // Check if player has enough money
         if (!economy.has(player, cost)) {
             player.sendMessage(MessageUtils.colorize(
-                plugin.getConfig().getString("messages.not-enough-money")
+                config.getString("messages.not-enough-money")
                     .replace(COST_PLACEHOLDER, String.valueOf(cost))));
             return;
         }

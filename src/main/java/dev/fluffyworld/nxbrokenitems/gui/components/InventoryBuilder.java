@@ -31,7 +31,8 @@ public final class InventoryBuilder {
     }
 
     public Inventory createBrokenItemsInventory(List<ItemStack> items, int page, String title, int size) {
-        final int itemsPerPage = size - 9;
+        final int itemsPerPageOffset = config.getInt("menu.restore.items-per-page-offset", 9);
+        final int itemsPerPage = size - itemsPerPageOffset;
         final Inventory inventory = Bukkit.createInventory(null, size, title);
 
         final int startIndex = page * itemsPerPage;
@@ -40,11 +41,15 @@ public final class InventoryBuilder {
         items.subList(startIndex, endIndex).forEach(inventory::addItem);
 
         if (page > 0) {
-            inventory.setItem(size - 9, createNavigationItem("previous-page"));
+            final int prevSlot = config.getInt("menu.restore.navigation-buttons.previous-page.slot", -9);
+            final int prevSlotCalculated = prevSlot < 0 ? size + prevSlot : prevSlot;
+            inventory.setItem(prevSlotCalculated, createNavigationItem("previous-page"));
         }
 
         if (endIndex < items.size()) {
-            inventory.setItem(size - 1, createNavigationItem("next-page"));
+            final int nextSlot = config.getInt("menu.restore.navigation-buttons.next-page.slot", -1);
+            final int nextSlotCalculated = nextSlot < 0 ? size + nextSlot : nextSlot;
+            inventory.setItem(nextSlotCalculated, createNavigationItem("next-page"));
         }
 
         return inventory;
@@ -104,9 +109,16 @@ public final class InventoryBuilder {
     public ItemStack removeCostLore(ItemStack item) {
         final ItemMeta meta = item.getItemMeta();
         if (meta != null && meta.hasLore()) {
+            final String loreFormat = config.getString(
+                "menu.restore.lore.format", "&eRestoration Cost: &6{cost}");
+            final String cleanFormat = MessageUtils.colorize(loreFormat).replaceAll("§[0-9a-fk-or]", "");
+            final String pattern = cleanFormat.replace("{cost}", "");
+            
             final List<String> lore = meta.getLore().stream()
-                .filter(line -> !line.contains("ราคาที่ต้องจ่าย:") && 
-                              !line.contains("Restoration Cost"))
+                .filter(line -> {
+                    final String cleanLine = line.replaceAll("§[0-9a-fk-or]", "");
+                    return !cleanLine.contains(pattern.trim());
+                })
                 .collect(Collectors.toList());
             meta.setLore(lore);
             item.setItemMeta(meta);

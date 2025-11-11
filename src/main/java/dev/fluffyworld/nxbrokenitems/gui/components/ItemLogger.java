@@ -17,24 +17,27 @@ import java.util.stream.Collectors;
 
 public final class ItemLogger {
 
-    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    private static final DateTimeFormatter DATE_ONLY_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
     private final File dataFolder;
     private final Logger logger;
+    private final FileConfiguration config;
 
-    public ItemLogger(File dataFolder, Logger logger) {
+    public ItemLogger(File dataFolder, Logger logger, FileConfiguration config) {
         this.dataFolder = dataFolder;
         this.logger = logger;
+        this.config = config;
     }
 
     public void logRecovery(String playerName, ItemStack item) {
-        final File logFile = new File(dataFolder, "log-recovery.yml");
+        final String logFileName = config.getString("logging.recovery-log-file", "log-recovery.yml");
+        final File logFile = new File(dataFolder, logFileName);
         final FileConfiguration logConfig = YamlConfiguration.loadConfiguration(logFile);
 
+        final String dateTimeFormat = config.getString("logging.date-time-format", "yyyy-MM-dd HH:mm:ss");
+        final String dateOnlyFormat = config.getString("logging.date-only-format", "yyyy-MM-dd");
+        
         final LocalDateTime now = LocalDateTime.now();
-        final String currentTime = now.format(DATE_FORMAT);
-        final String currentDate = now.format(DATE_ONLY_FORMAT);
+        final String currentTime = now.format(DateTimeFormatter.ofPattern(dateTimeFormat));
+        final String currentDate = now.format(DateTimeFormatter.ofPattern(dateOnlyFormat));
 
         final String logEntry = formatLogEntry(playerName, item, "restored", currentTime);
 
@@ -46,12 +49,16 @@ public final class ItemLogger {
     }
 
     public void logDeletion(String playerName, ItemStack item) {
-        final File logFile = new File(dataFolder, "log-item-delete.yml");
+        final String logFileName = config.getString("logging.deletion-log-file", "log-item-delete.yml");
+        final File logFile = new File(dataFolder, logFileName);
         final FileConfiguration logConfig = YamlConfiguration.loadConfiguration(logFile);
 
+        final String dateTimeFormat = config.getString("logging.date-time-format", "yyyy-MM-dd HH:mm:ss");
+        final String dateOnlyFormat = config.getString("logging.date-only-format", "yyyy-MM-dd");
+        
         final LocalDateTime now = LocalDateTime.now();
-        final String currentTime = now.format(DATE_FORMAT);
-        final String currentDate = now.format(DATE_ONLY_FORMAT);
+        final String currentTime = now.format(DateTimeFormatter.ofPattern(dateTimeFormat));
+        final String currentDate = now.format(DateTimeFormatter.ofPattern(dateOnlyFormat));
 
         final String logEntry = formatLogEntry(playerName, item, "deleted", currentTime);
 
