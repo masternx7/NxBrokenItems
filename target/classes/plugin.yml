@@ -1,5 +1,5 @@
 name: NxBrokenItems
-version: '1.0.5'
+version: '1.0.6'
 main: dev.fluffyworld.nxbrokenitems.NxBrokenItems
 author: MasterN
 description: Plugin that helps in restoring broken items

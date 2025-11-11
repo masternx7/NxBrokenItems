@@ -2,7 +2,7 @@
 #                                                                       #
 #             Plugin that helps in restoring broken items.              #
 #                          Create by MasterN                            #
-#                     For Fluffyworld & Overmine                        #
+#                            For Fluffyworld                            #
 #                                                                       #
 #########################################################################
 
@@ -57,10 +57,7 @@ logging:
 placeholderapi:
   inventory-full-placeholder: "%fluffy_isfull%"
   inventory-full-value: "true"
-
-# Repair items and save them to the dataUser. // บันทึกไอเทมและซ่อมไอเทมถ้าหากเป็น true
 repair-on-recovery: false
-# The amount of money required to recover the item. // จำนวนเงินที่ต้องใช้ในการกู้ไอเทม
 costs:
   - 1000
   - 2000
@@ -73,9 +70,7 @@ costs:
   - 45000
   - 50000
 default-cost-without-unbreaking: 500
-# Cost for items with AdvancedEnchantments
 advanced-enchantment-cost: 30000
-# Whitelist devices that are eligible for broken item recovery. // ไวท์ลิสต์อุปกรณ์ที่มีสิทธิ์ได้รับการกู้คืนรายการที่แตก
 whitelist:
   - SHIELD
   - TRIDENT
@@ -102,20 +97,13 @@ whitelist:
   - DIAMOND_LEGGINGS
   - DIAMOND_BOOTS
 
-# Blacklist items with custom data as shown in the list below. // Blacklist ไอเทมที่มี custom data ตาม list ด้านล่าง
-# Items with these custom data keys will be saved but cannot be restored
 blacklist:
   custom-data:
     - "advancedenchantments:ae_enchantment-trench"
-    - "advancedenchantments:ae_enchantment-explosive"
 
-# Custom data multipliers for restoration cost
-# Items with these custom data will have their cost multiplied
 cost-multipliers:
   "advancedenchantments:ae_enchantment-trench": 2.0
-  "advancedenchantments:ae_enchantment-explosive": 1.5
 
-# {cost} Shows the amount of money required to recover the item. // แสดงจำนวนเงินที่ต้องใช้เป็นค่ากู้ไอเทม
 messages:
   usage: "&6Commands:\n&e/nb restore &f- Open Broken Items GUI\n&e/nb reload &f- Reload config &c(Admin)"
   reload-success: "&aConfiguration reloaded successfully."

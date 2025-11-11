@@ -22,19 +22,12 @@ public final class NxBrokenItems extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Register event listeners
         getServer().getPluginManager().registerEvents(new ItemBreakListener(this), this);
-
-        // Register command executor and tab completer
         final NxBrokenItemsCommand commandExecutor = new NxBrokenItemsCommand(this);
         Objects.requireNonNull(getCommand("nxbrokenitems"), "Command 'nxbrokenitems' not found")
             .setExecutor(commandExecutor);
         getCommand("nxbrokenitems").setTabCompleter(commandExecutor);
-
-        // Save default config
         saveDefaultConfig();
-
-        // Create required directories and files
         initializePluginFiles();
 
         getLogger().info("NxBrokenItems has been enabled successfully!");
@@ -129,13 +122,11 @@ public final class NxBrokenItems extends JavaPlugin {
         
         if (!playerDataFile.exists()) {
             try {
-                // Ensure parent directory exists
                 final File parentDir = playerDataFile.getParentFile();
                 if (parentDir != null && !parentDir.exists()) {
                     parentDir.mkdirs();
                 }
                 
-                // Create the file
                 if (playerDataFile.createNewFile()) {
                     getLogger().info("Created data file for player: " + playerUUID);
                 }

@@ -32,6 +32,7 @@ public final class BrokenItemsGUI implements Listener {
     private final ItemCostCalculator costCalculator;
     private final ItemLogger itemLogger;
     private final InventoryBuilder inventoryBuilder;
+    private final ItemComparator itemComparator;
 
     public BrokenItemsGUI(NxBrokenItems plugin, Economy economy) {
         this.plugin = Objects.requireNonNull(plugin, "Plugin cannot be null");
@@ -39,6 +40,7 @@ public final class BrokenItemsGUI implements Listener {
         this.costCalculator = new ItemCostCalculator(plugin.getConfig());
         this.itemLogger = new ItemLogger(plugin.getDataFolder(), plugin.getLogger(), plugin.getConfig());
         this.inventoryBuilder = new InventoryBuilder(plugin.getConfig(), plugin.getLogger());
+        this.itemComparator = new ItemComparator();
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
@@ -103,29 +105,42 @@ public final class BrokenItemsGUI implements Listener {
             return;
         }
 
-        final ItemMeta meta = clickedItem.getItemMeta();
-        if (meta == null || meta.getDisplayName() == null) {
-            openConfirmationMenu(player, clickedItem);
-            return;
-        }
-
-        final String itemName = meta.getDisplayName();
         final FileConfiguration config = plugin.getConfig();
         final String nextPageName = MessageUtils.colorize(
             config.getString("menu.restore.navigation-buttons.next-page.display-name", "&aNext Page"));
         final String prevPageName = MessageUtils.colorize(
             config.getString("menu.restore.navigation-buttons.previous-page.display-name", "&aPrevious Page"));
 
-        final UUID playerUUID = player.getUniqueId();
-        final int currentPage = playerPageMap.getOrDefault(playerUUID, 0);
+        final ItemMeta meta = clickedItem.getItemMeta();
+        if (meta != null && meta.getDisplayName() != null) {
+            final String itemName = meta.getDisplayName();
+            final UUID playerUUID = player.getUniqueId();
+            final int currentPage = playerPageMap.getOrDefault(playerUUID, 0);
 
-        if (itemName.equals(nextPageName)) {
-            openInventory(player, currentPage + 1);
-        } else if (itemName.equals(prevPageName)) {
-            openInventory(player, currentPage - 1);
-        } else {
+            if (itemName.equals(nextPageName)) {
+                openInventory(player, currentPage + 1);
+                return;
+            } else if (itemName.equals(prevPageName)) {
+                openInventory(player, currentPage - 1);
+                return;
+            }
+        }
+
+        if (isBrokenItem(player, clickedItem)) {
             openConfirmationMenu(player, clickedItem);
         }
+    }
+
+    private boolean isBrokenItem(Player player, ItemStack item) {
+        final UUID playerUUID = player.getUniqueId();
+        final FileConfiguration dataConfig = plugin.getDataConfig(playerUUID);
+        
+        if (dataConfig == null || !dataConfig.contains("restoreItem")) {
+            return false;
+        }
+
+        final List<ItemStack> brokenItems = inventoryBuilder.loadBrokenItems(dataConfig);
+        return brokenItems.stream().anyMatch(brokenItem -> ItemComparator.isSameItem(brokenItem, item));
     }
 
     private void openConfirmationMenu(Player player, ItemStack selectedItem) {
@@ -226,7 +241,6 @@ public final class BrokenItemsGUI implements Listener {
             return;
         }
 
-        // Find and restore the item
         final ConfigurationSection restoreSection = dataConfig.getConfigurationSection("restoreItem");
         if (restoreSection == null) {
             sendMessage(player, "messages.no-broken-items");
@@ -234,14 +248,12 @@ public final class BrokenItemsGUI implements Listener {
         }
 
         for (String key : restoreSection.getKeys(false)) {
-            // Try new format first (.item), then fallback to old format
             ItemStack storedItem = dataConfig.getItemStack("restoreItem." + key + ".item");
             if (storedItem == null) {
                 storedItem = dataConfig.getItemStack("restoreItem." + key);
             }
             
             if (storedItem != null && isSameItem(storedItem, item)) {
-                // Check if item is blacklisted
                 boolean isBlacklisted = dataConfig.getBoolean("restoreItem." + key + ".blacklisted", false);
                 
                 if (isBlacklisted) {
